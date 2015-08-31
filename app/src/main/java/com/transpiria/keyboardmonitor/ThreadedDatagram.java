@@ -80,7 +80,7 @@ public class ThreadedDatagram {
 
         @Override
         public void run() {
-            byte[] buffer = new byte[512];
+            byte[] buffer = Content;
             DatagramPacket pack = new DatagramPacket(buffer, buffer.length, Address, Port);
             try {
                 Socket.Socket.send(pack);
