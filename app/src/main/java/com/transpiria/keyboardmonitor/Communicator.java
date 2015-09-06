@@ -25,9 +25,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadFactory;
 
-/**
- * Created by Josh on 5/17/2015.
- */
 public class Communicator implements ReceiveDataSubscriber {
 
     public interface IEndpointDiscovered {

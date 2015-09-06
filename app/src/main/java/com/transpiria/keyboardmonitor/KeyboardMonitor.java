@@ -3,6 +3,7 @@ package com.transpiria.keyboardmonitor;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.SurfaceView;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -32,6 +33,9 @@ public class KeyboardMonitor extends Activity
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.monitor);
+
+        ProcessorBars processors = (ProcessorBars) findViewById(R.id.processors);
+        processors.setZOrderOnTop(true);
 
         SlowUI = new Timer();
 
@@ -84,16 +88,19 @@ public class KeyboardMonitor extends Activity
             TextView up = (TextView) findViewById(R.id.up);
             up.setText("  Up: ");
 
+            ProcessorBars processors = (ProcessorBars) findViewById(R.id.processors);
+
             if (Stats.Current != null) {
-                TextView test = (TextView) findViewById(R.id.text1);
-                test.setText("Processor: " + String.valueOf(Stats.Current.Processor.Value) + "\r\n");
-                for (double value : Stats.Current.Processor.Values) {
-                    test.append("\t" + String.valueOf(value) + "\r\n");
-                }
+//                TextView test = (TextView) findViewById(R.id.text1);
+//                test.setText("Processor: " + String.valueOf(Stats.Current.Processor.Value) + "\r\n");
+//                for (double value : Stats.Current.Processor.Values) {
+//                    test.append("\t" + String.valueOf(value) + "\r\n");
+//                }
 
                 down.append(FormatBytesPerSecond(Stats.Current.BytesReceived.Value));
                 up.append(FormatBytesPerSecond(Stats.Current.BytesSent.Value));
 
+                processors.SetValues(Stats.Current.Processor.Values);
             }
 
         } catch (Exception ex) {
