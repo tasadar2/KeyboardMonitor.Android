@@ -1,6 +1,7 @@
 package com.transpiria.keyboardmonitor;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -20,6 +21,16 @@ public class ProcessorBars
     private int mWidth;
     private List<Double> Values;
 
+    public int mBarColor;
+
+    public int getBarColor() {
+        return mBarColor;
+    }
+
+    public void setBarColor(int value) {
+        mBarColor = value;
+    }
+
     public ProcessorBars(Context context) {
         super(context);
 
@@ -30,6 +41,10 @@ public class ProcessorBars
         super(context, attrs);
 
         SetupHolder();
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.processor_bars);
+        int s = a.getColor(R.styleable.processor_bars_barColor, 0);
+        this.setBarColor(s);
+        a.recycle();
     }
 
     public ProcessorBars(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -56,13 +71,15 @@ public class ProcessorBars
             @Override
             public void run() {
                 Canvas canvas = Holder.lockCanvas();
-                try {
-                    synchronized (Holder) {
-                        Clear(canvas);
-                        DrawBars(canvas);
+                if (canvas != null) {
+                    try {
+                        synchronized (Holder) {
+                            Clear(canvas);
+                            DrawBars(canvas);
+                        }
+                    } finally {
+                        Holder.unlockCanvasAndPost(canvas);
                     }
-                } finally {
-                    Holder.unlockCanvasAndPost(canvas);
                 }
             }
         }).start();
@@ -77,7 +94,7 @@ public class ProcessorBars
             float barSize = (float) mWidth / Values.size();
 
             Paint paint = new Paint();
-            paint.setColor(Color.WHITE);
+            paint.setColor(getBarColor());
             paint.setStyle(Paint.Style.FILL);
 
             for (int index = 0; index < Values.size(); index++) {
