@@ -1,9 +1,11 @@
 package com.transpiria.keyboardmonitor;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.SurfaceView;
+import android.os.Handler;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -13,14 +15,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Timer;
-import java.util.TimerTask;
 
 public class KeyboardMonitor extends Activity
         implements
-        com.transpiria.keyboardmonitor.StatisticsService.ISubscriptionsChanged {
+        StatisticsService.ISubscriptionsChanged,
+        StatisticsService.IStateChanged {
 
-    private Timer SlowUI;
     private StatisticsService Stats;
+    private Handler SlowHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,82 +39,84 @@ public class KeyboardMonitor extends Activity
         ProcessorBars processors = (ProcessorBars) findViewById(R.id.processors);
         processors.setZOrderOnTop(true);
 
-        SlowUI = new Timer();
-
         Stats = new StatisticsService();
         Stats.SubscriptionsChangedEvent.AddObserver(this);
+        Stats.StateChangedEvent.AddObserver(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        Stats.Subscribe();
-        ResumeUI();
-    }
-
-    private void ResumeUI() {
-        SlowUI.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        UpdateUISlow();
-                    }
-                });
-            }
-        }, 0, 1000);
+        Stats.SetActive();
+        SlowHandler.postDelayed(UpdateSlowUI, 0);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        Stats.UnSubscribe();
-        SlowUI.purge();
+        if (!isFinishing()) {
+            SlowHandler.postDelayed(Stats.CheckIdle, 1000);
+        }
+
+        Stats.SetInactive();
+        SlowHandler.removeCallbacks(UpdateSlowUI);
     }
 
-    public void UpdateUISlow() {
-        try {
-            Date now = new Date();
-            TextView time = (TextView) findViewById(R.id.time);
-            time.setText(new SimpleDateFormat("h':'mm':'ss", Locale.US).format(now));
+    private Runnable UpdateSlowUI = new Runnable() {
+        @Override
+        public void run() {
+            runOnUiThread(UpdateSlowUIUIThread);
+        }
+    };
 
-            TextView date = (TextView) findViewById(R.id.date);
-            date.setText(new SimpleDateFormat("E MMM dd", Locale.US).format(now));
+    private Runnable UpdateSlowUIUIThread = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                Date now = new Date();
+                TextView time = (TextView) findViewById(R.id.time);
+                time.setText(new SimpleDateFormat("h':'mm':'ss", Locale.US).format(now));
 
-            TextView down = (TextView) findViewById(R.id.down);
-            down.setText("Down: ");
+                TextView date = (TextView) findViewById(R.id.date);
+                date.setText(new SimpleDateFormat("E MMM dd", Locale.US).format(now));
 
-            TextView up = (TextView) findViewById(R.id.up);
-            up.setText("  Up: ");
+                TextView down = (TextView) findViewById(R.id.down);
+                down.setText("Down: ");
 
-            ProcessorBars processors = (ProcessorBars) findViewById(R.id.processors);
+                TextView up = (TextView) findViewById(R.id.up);
+                up.setText("  Up: ");
 
-            if (Stats.Current != null) {
+                ProcessorBars processors = (ProcessorBars) findViewById(R.id.processors);
+
+                if (Stats.Current != null) {
 //                TextView test = (TextView) findViewById(R.id.text1);
 //                test.setText("Processor: " + String.valueOf(Stats.Current.Processor.Value) + "\r\n");
 //                for (double value : Stats.Current.Processor.Values) {
 //                    test.append("\t" + String.valueOf(value) + "\r\n");
 //                }
 
-                down.append(FormatBytesPerSecond(Stats.Current.BytesReceived.Value));
-                up.append(FormatBytesPerSecond(Stats.Current.BytesSent.Value));
+                    down.append(FormatBytesPerSecond(Stats.Current.BytesReceived.Value));
+                    up.append(FormatBytesPerSecond(Stats.Current.BytesSent.Value));
 
-                processors.SetValues(Stats.Current.Processor.Values);
+                    processors.SetValues(Stats.Current.Processor.Values);
+                }
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            SlowHandler.postDelayed(UpdateSlowUI, 1000);
         }
-    }
+    };
 
     private String FormatBytesPerSecond(double value) {
         if (value < 1152) {
-            return String.valueOf(Math.ceil(value)) + " B";
+            DecimalFormat df = new DecimalFormat("#");
+            return df.format(Math.ceil(value)) + " B";
         } else {
-            DecimalFormat df = new DecimalFormat("##.00");
+            DecimalFormat df = new DecimalFormat("#.00");
             value = value / 1024;
             if (value < 896) {
                 return df.format((double) Math.round(value * 100) / 100) + " KB";
@@ -132,6 +136,45 @@ public class KeyboardMonitor extends Activity
     public void SubscriptionsChanged() {
         if (!Stats.isSubscribed() && !Stats.Subscriptions.isEmpty()) {
             Stats.Subscribe(Stats.Subscriptions.get(0), false);
+        }
+    }
+
+    @Override
+    public void StateChanged(StatisticsService.State state) {
+        //if im not on the selection screen, then start idle timer
+
+        if (state == StatisticsService.State.Idle) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Window window = getWindow();
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+                        long l = SystemClock.uptimeMillis();
+                        PowerManager.WakeLock wl = powerManager.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "Endpoint Discovered");
+                        wl.acquire();
+                        wl.release();
+
+                        Window window = getWindow();
+                        window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
         }
     }
 }
