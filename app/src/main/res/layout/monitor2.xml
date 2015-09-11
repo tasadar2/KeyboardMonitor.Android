@@ -1,0 +1,94 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#004860"
+    tools:context=".FullscreenActivity">
+    <!--android:background="#0099cc"  004860  002430-->
+
+
+    <RelativeLayout
+        android:id="@+id/datetime"
+        android:layout_width="154dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_margin="8dp"
+        android:background="@drawable/group"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/placeholder"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size"
+            android:typeface="monospace" />
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/time"
+            android:text="@string/placeholder"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size"
+            android:typeface="monospace" />
+
+    </RelativeLayout>
+
+
+    <RelativeLayout
+        android:id="@+id/bandwidth"
+        android:layout_width="187dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="8dp"
+        android:layout_toEndOf="@id/datetime"
+        android:layout_toRightOf="@id/datetime"
+        android:background="@drawable/group"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/down"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/placeholder"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size"
+            android:typeface="monospace" />
+
+        <TextView
+            android:id="@+id/up"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/down"
+            android:text="@string/placeholder"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size"
+            android:typeface="monospace" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="69dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_margin="8dp"
+        android:layout_toEndOf="@id/bandwidth"
+        android:layout_toRightOf="@id/bandwidth"
+        android:background="@drawable/group"
+        android:padding="10dp">
+
+        <com.transpiria.keyboardmonitor.ProcessorBars
+            android:id="@+id/processors"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" />
+
+    </RelativeLayout>
+
+</RelativeLayout>
