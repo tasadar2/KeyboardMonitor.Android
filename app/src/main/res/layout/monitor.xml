@@ -7,14 +7,13 @@
     tools:context=".FullscreenActivity">
 
     <RelativeLayout
-        android:layout_width="300dp"
+        android:layout_width="310dp"
         android:layout_height="120dp">
 
         <TextView
             android:id="@+id/fps"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
             android:gravity="center"
             android:text="@string/placeholder"
             android:textColor="@color/white"
@@ -22,11 +21,12 @@
             android:textStyle="bold"
             android:typeface="monospace" />
 
-        <TextView
+        <com.transpiria.keyboardmonitor.GraphView
             android:id="@+id/fpsgraph"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:layout_above="@id/fps" />
+            android:layout_below="@id/fps"
+            app:graphColor="#ffffff" />
 
     </RelativeLayout>
 

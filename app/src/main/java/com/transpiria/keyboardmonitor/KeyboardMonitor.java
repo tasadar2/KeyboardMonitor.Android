@@ -36,6 +36,9 @@ public class KeyboardMonitor extends Activity
 
         setContentView(R.layout.monitor);
 
+        GraphView fpsGraph = (GraphView) findViewById(R.id.fpsgraph);
+        fpsGraph.setZOrderOnTop(true);
+
         ProcessorBars processors = (ProcessorBars) findViewById(R.id.processors);
         processors.setZOrderOnTop(true);
 
@@ -130,7 +133,10 @@ public class KeyboardMonitor extends Activity
             TextView fps = (TextView) findViewById(R.id.fps);
             fps.setText(String.valueOf(Stats.FramesPerSecond));
 
-            MainHandler.postDelayed(UpdateRealtimeUI, 333);
+            GraphView fpsGraph = (GraphView) findViewById(R.id.fpsgraph);
+            fpsGraph.SetValues(Stats.FramesPerSecond);
+
+            MainHandler.postDelayed(UpdateRealtimeUI, 150);
         }
     };
 

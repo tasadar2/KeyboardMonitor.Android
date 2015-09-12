@@ -13,4 +13,8 @@
         <attr name="barColor" format="color" />
     </declare-styleable>
 
+    <declare-styleable name="graphView">
+        <attr name="graphColor" format="color" />
+    </declare-styleable>
+
 </resources>
