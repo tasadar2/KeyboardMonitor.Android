@@ -7,7 +7,8 @@ public enum MessageType {
     Discovered(0xff16),
     Subscribe(0xff17),
     Unsubscribe(0xff18),
-    Message(0xff19);
+    Message(0xff19),
+    FramesPerSecond(0xff1a);
 
     public final short Value;
     public final byte[] Bytes;

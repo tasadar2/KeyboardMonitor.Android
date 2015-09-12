@@ -22,7 +22,7 @@ public class KeyboardMonitor extends Activity
         StatisticsService.IStateChanged {
 
     private StatisticsService Stats;
-    private Handler SlowHandler = new Handler();
+    private Handler MainHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +49,8 @@ public class KeyboardMonitor extends Activity
         super.onResume();
 
         Stats.SetActive();
-        SlowHandler.postDelayed(UpdateSlowUI, 0);
+        MainHandler.postDelayed(UpdateSlowUI, 0);
+        MainHandler.postDelayed(UpdateRealtimeUI, 0);
     }
 
     @Override
@@ -57,17 +58,25 @@ public class KeyboardMonitor extends Activity
         super.onPause();
 
         if (!isFinishing()) {
-            SlowHandler.postDelayed(Stats.CheckIdle, 1000);
+            MainHandler.postDelayed(Stats.CheckIdle, 1000);
         }
 
         Stats.SetInactive();
-        SlowHandler.removeCallbacks(UpdateSlowUI);
+        MainHandler.removeCallbacks(UpdateSlowUI);
+        MainHandler.removeCallbacks(UpdateRealtimeUI);
     }
 
     private Runnable UpdateSlowUI = new Runnable() {
         @Override
         public void run() {
             runOnUiThread(UpdateSlowUIUIThread);
+        }
+    };
+
+    private Runnable UpdateRealtimeUI = new Runnable() {
+        @Override
+        public void run() {
+            runOnUiThread(UpdateRealtimeUIUIThread);
         }
     };
 
@@ -88,6 +97,8 @@ public class KeyboardMonitor extends Activity
                 TextView up = (TextView) findViewById(R.id.up);
                 up.setText("  Up: ");
 
+                TextView cpu = (TextView) findViewById(R.id.cpu);
+                cpu.setText("Cpu: ");
                 ProcessorBars processors = (ProcessorBars) findViewById(R.id.processors);
 
                 if (Stats.Current != null) {
@@ -96,10 +107,12 @@ public class KeyboardMonitor extends Activity
 //                for (double value : Stats.Current.Processor.Values) {
 //                    test.append("\t" + String.valueOf(value) + "\r\n");
 //                }
+                    DecimalFormat df = new DecimalFormat("#");
 
                     down.append(FormatBytesPerSecond(Stats.Current.BytesReceived.Value));
                     up.append(FormatBytesPerSecond(Stats.Current.BytesSent.Value));
 
+                    cpu.append(df.format(Stats.Current.Processor.Value) + " %");
                     processors.SetValues(Stats.Current.Processor.Values);
                 }
 
@@ -107,7 +120,17 @@ public class KeyboardMonitor extends Activity
                 ex.printStackTrace();
             }
 
-            SlowHandler.postDelayed(UpdateSlowUI, 1000);
+            MainHandler.postDelayed(UpdateSlowUI, 1000);
+        }
+    };
+
+    private Runnable UpdateRealtimeUIUIThread = new Runnable() {
+        @Override
+        public void run() {
+            TextView fps = (TextView) findViewById(R.id.fps);
+            fps.setText(String.valueOf(Stats.FramesPerSecond));
+
+            MainHandler.postDelayed(UpdateRealtimeUI, 333);
         }
     };
 
