@@ -4,6 +4,7 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
@@ -32,11 +33,16 @@ public class Communicator implements ReceiveDataSubscriber {
     }
 
     public interface IMessageReceived {
-        void MessageReceived(byte[] content);
+        void MessageReceived(MessageType messageType, String content);
+    }
+
+    public interface IFrapsReceived {
+        void MessageReceived(int framesPerSecond);
     }
 
     public final Event<IEndpointDiscovered> EndpointDiscoveredEvent = new Event<>();
-    public final Event<IMessageReceived> IMessageReceivedEvent = new Event<>();
+    public final Event<IMessageReceived> MessageReceivedEvent = new Event<>();
+    public final Event<IFrapsReceived> FrapsReceivedEvent = new Event<>();
 
     private final short EndMessage = 0x512B;
     private final byte[] EndCommandBytes = ByteBuffer.allocate(2).putShort(EndMessage).array();
@@ -62,9 +68,15 @@ public class Communicator implements ReceiveDataSubscriber {
         }
     }
 
-    protected void OnMessageReceived(byte[] content) {
-        for (IMessageReceived observer : IMessageReceivedEvent.Observers) {
-            observer.MessageReceived(content);
+    protected void OnMessageReceived(MessageType messageType, String content) {
+        for (IMessageReceived observer : MessageReceivedEvent.Observers) {
+            observer.MessageReceived(messageType, content);
+        }
+    }
+
+    protected void OnFrapsReceived(int framesPerSecond) {
+        for (IFrapsReceived observer : FrapsReceivedEvent.Observers) {
+            observer.MessageReceived(framesPerSecond);
         }
     }
 
@@ -137,7 +149,6 @@ public class Communicator implements ReceiveDataSubscriber {
         public InetAddress BroadcastAddress;
     }
 
-
     @Override
     public void DataReceived(ThreadedDatagram socket, byte[] data, int length, InetAddress address) {
         if (length > 0) {
@@ -176,6 +187,15 @@ public class Communicator implements ReceiveDataSubscriber {
             else if (command == MessageType.Message.Value) {
                 BuildReceivedMessage(buffer, length);
             }
+
+            //  Message
+            //  FF 1A		Start
+            //  FF FF FF FF	Frames Per Second
+            //  51 2B		End
+            else if (command == MessageType.FramesPerSecond.Value) {
+                int framesPerSecond = buffer.getInt();
+                OnFrapsReceived(framesPerSecond);
+            }
         }
     }
 
@@ -202,7 +222,12 @@ public class Communicator implements ReceiveDataSubscriber {
 
                 if (message.Parts.isEmpty()) {
                     Messages.remove(messageIdentifier);
-                    OnMessageReceived(message.Content);
+                    try {
+                        String content = new String(message.Content, "UTF-8");
+                        OnMessageReceived(MessageType.Message, content);
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
