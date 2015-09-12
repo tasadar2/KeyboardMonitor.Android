@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:text="@string/placeholder"
             android:textColor="@color/white"
-            android:textSize="@dimen/text_size"
+            android:textSize="@dimen/normal"
             android:typeface="monospace" />
 
         <TextView
@@ -34,7 +34,7 @@
             android:layout_below="@id/time"
             android:text="@string/placeholder"
             android:textColor="@color/white"
-            android:textSize="@dimen/text_size"
+            android:textSize="@dimen/normal"
             android:typeface="monospace" />
 
     </RelativeLayout>
@@ -57,7 +57,7 @@
             android:layout_height="wrap_content"
             android:text="@string/placeholder"
             android:textColor="@color/white"
-            android:textSize="@dimen/text_size"
+            android:textSize="@dimen/normal"
             android:typeface="monospace" />
 
         <TextView
@@ -67,7 +67,7 @@
             android:layout_below="@id/down"
             android:text="@string/placeholder"
             android:textColor="@color/white"
-            android:textSize="@dimen/text_size"
+            android:textSize="@dimen/normal"
             android:typeface="monospace" />
 
     </RelativeLayout>
