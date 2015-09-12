@@ -15,7 +15,7 @@ import java.util.TimerTask;
 public class StatisticsService
         implements
         com.transpiria.keyboardmonitor.Communicator.IEndpointDiscovered,
-        com.transpiria.keyboardmonitor.Communicator.IMessageReceived {
+        com.transpiria.keyboardmonitor.Communicator.IMessageReceived, com.transpiria.keyboardmonitor.Communicator.IFrapsReceived {
 
     public interface ISubscriptionsChanged {
         void SubscriptionsChanged();
@@ -36,8 +36,9 @@ public class StatisticsService
     private Handler IdleHandler;
     private Date LastDiscoverCheck;
 
-    public List<Subscription> Subscriptions;
+    public final List<Subscription> Subscriptions;
     public State IdleState = State.Normal;
+    public int FramesPerSecond;
 
     public final Event<ISubscriptionsChanged> SubscriptionsChangedEvent = new Event<>();
     public final Event<IStateChanged> StateChangedEvent = new Event<>();
@@ -47,7 +48,8 @@ public class StatisticsService
 
         Communicator = new Communicator();
         Communicator.EndpointDiscoveredEvent.AddObserver(this);
-        Communicator.IMessageReceivedEvent.AddObserver(this);
+        Communicator.MessageReceivedEvent.AddObserver(this);
+        Communicator.FrapsReceivedEvent.AddObserver(this);
 
         IdleHandler = new Handler();
         SetActive();
@@ -163,24 +165,30 @@ public class StatisticsService
     }
 
     @Override
-    public void MessageReceived(byte[] content) {
+    public void MessageReceived(MessageType messageType, String content) {
         try {
-            if (LastSubscription != null) {
-                LastSubscription.LastReceived = new Date();
+            if (messageType == MessageType.Message) {
+                if (LastSubscription != null) {
+                    LastSubscription.LastReceived = new Date();
+                }
+
+                final Info info = new Info();
+                JSONObject json = new JSONObject(content);
+
+                info.Processor = GetCounter(json.getJSONObject("Processors"));
+                info.BytesReceived = GetCounter(json.getJSONObject("BytesReceived"));
+                info.BytesSent = GetCounter(json.getJSONObject("BytesSent"));
+
+                Current = info;
             }
-
-            final Info info = new Info();
-            String jsonText = new String(content, "UTF-8");
-            JSONObject json = new JSONObject(jsonText);
-
-            info.Processor = GetCounter(json.getJSONObject("Processors"));
-            info.BytesReceived = GetCounter(json.getJSONObject("BytesReceived"));
-            info.BytesSent = GetCounter(json.getJSONObject("BytesSent"));
-
-            Current = info;
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void MessageReceived(int framesPerSecond) {
+        FramesPerSecond = framesPerSecond;
     }
 
     private void ZeroValues() {
